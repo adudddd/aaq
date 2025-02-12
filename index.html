@@ -1,3 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Celestial </title>
+  <style>
+    /* Base & Perspective Setup */
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+      perspective: 1000px; /* Enables 3D transforms */
+      background: #000;
+      position: relative;
+    }
+    /* Aurora Background Effect */
+    .aurora {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(130deg, rgba(255,0,150,0.3), rgba(0,204,255,0.3));
+      filter: blur(50px);
+      opacity: 0.5;
+      animation: auroraMove 20s infinite alternate;
+      z-index: 0;
+    }
+    @keyframes auroraMove {
+      0% { transform: translateX(-10%) translateY(0); }
+      100% { transform: translateX(10%) translateY(20%); }
+    }
+    /* Stars Background */
+    .stars {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle 5s infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+    /* Enhanced Moon Glow (Static & Realistic) */
+    .moon {
+      position: absolute;
+      top: 50px;
+      right: 50px;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle at 30% 30%, #fff, #e0e0e0 70%, #a9a9a9 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(255,255,255,0.7);
+      z-index: 3;
+      will-change: box-shadow;
+      animation: moonGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes moonGlow {
+      0% { box-shadow: 0 0 30px rgba(255,255,255,0.7); }
+      100% { box-shadow: 0 0 60px rgba(255,255,255,1); }
+    }
+    .moon:hover {
+      box-shadow: 0 0 80px rgba(255,255,255,1);
+    }
+    /* Text Container with 3D Perspective */
+    .text-container {
+      position: relative;
+      z-index: 4;
+      max-width: 800px;
+      min-height: 200px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      perspective: 800px;
+    }
+    .text-container h1 {
+      font-size: 2.8em;
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+      opacity: 0;
+      animation: titleReveal 2s forwards;
+    }
+    @keyframes titleReveal {
+      to { opacity: 1; }
+    }
+    /* 3D Animated Sentence Styling with Gradient & Glow */
+    .sentence {
+      position: absolute;
+      font-size: 1.8em;
+      white-space: nowrap;
+      background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0);
+      background-size: 300%;
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+      will-change: transform, opacity, filter;
+      transform-style: preserve-3d;
+      animation: gradientShift 5s ease-in-out infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* Sparkles with Color-Changing Animation */
+    .sparkle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform, opacity;
+      animation: sparkleFloat 1s forwards, sparkleColor 1s forwards;
+    }
+    @keyframes sparkleFloat {
+      0% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+      100% { opacity: 0; transform: translate3d(var(--tx), var(--ty), 0) scale(0); }
+    }
+    @keyframes sparkleColor {
+      0% { background-color: #fff; }
+      50% { background-color: #ff0080; }
+      100% { background-color: #40e0d0; }
+    }
+    /* Moon Dust Particles */
+    .moon-dust {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    @keyframes dustFloat {
+      0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0); }
+      50% { opacity: 1; transform: translate3d(var(--tx), var(--ty), 0) scale(1); }
+      100% { opacity: 0; transform: translate3d(calc(var(--tx) * 2), calc(var(--ty) * 2), 0) scale(0); }
+    }
+    /* Comet Animation */
+    .comet {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: linear-gradient(45deg, #fff, transparent);
+      border-radius: 50%;
+      box-shadow: 0 0 10px 2px #fff;
+      pointer-events: none;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    @keyframes cometTrail {
+      0% { opacity: 1; transform: translate3d(var(--startX), var(--startY), 0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translate3d(var(--endX), var(--endY), 0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="aurora"></div>
+  <div class="stars"></div>
+  <div class="moon"></div>
+  <div class="text-container">
+    <h1>To My Celestial Love</h1>
+  </div>
 
+  <script>
+    /* Create Stars */
+    const starsContainer = document.querySelector('.stars');
+    for (let i = 0; i < 200; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + 'vw';
+      star.style.top = Math.random() * 100 + 'vh';
+      star.style.animationDelay = Math.random() * 5 + 's';
+      starsContainer.appendChild(star);
+    }
+    
+    /* Messages Array (More texts added for variety) */
+    const messages = [
+      "In this vast cosmic dance of stars and moons, you are my universe's brightest light.",
+      "Like the eternal moon that graces our night sky, your presence fills my world with wonder.",
+      "Just as the moon pulls the tides, your soul has an inexplicable power over my heart.",
+      "Through the darkest nights and stormiest seas, your light remains unwavering.",
+      "Remember, my love - like the moon's phases, life's challenges are temporary.",
+      "Your spirit, as boundless as the cosmos itself, cannot be contained.",
+      "In moments when the world feels heavy, look up at our shared moon.",
+      "Know that somewhere, I'm gazing at the same celestial guardian.",
+      "Until our paths converge again under the moonlit sky, you are cherished beyond measure.",
+      "Across the endless night, our hearts speak in the language of the stars.",
+      "Every phase of the moon reminds me of our ever-changing yet eternal love.",
+      "In the quiet solitude of space, your love is the melody that guides me."
+    ];
+    
+    const container = document.querySelector('.text-container');
+    const moonElem = document.querySelector('.moon');
+    let currentIndex = 0;
+    
+    /* Moon Dust Particle Effect */
+    function createMoonDust(x, y) {
+      const dust = document.createElement('div');
+      dust.className = 'moon-dust';
+      dust.style.left = x + 'px';
+      dust.style.top = y + 'px';
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 50 + Math.random() * 100;
+      dust.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+      dust.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+      dust.style.animation = `dustFloat ${1 + Math.random()}s forwards`;
+      document.body.appendChild(dust);
+      setTimeout(() => dust.remove(), 1500);
+    }
+    
+    /* Sparkle Particle Effect with Color Transitions */
+    function createSparkles(x, y) {
+      for (let i = 0; i < 8; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = x + 'px';
+        sparkle.style.top = y + 'px';
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 50 + Math.random() * 50;
+        sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+        sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+        sparkle.style.animation = `sparkleFloat 1s cubic-bezier(0.68,-0.55,0.27,1.55) forwards, sparkleColor 1s forwards`;
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 1200);
+      }
+    }
+    
+    /* Comet Effect */
+    function createComet() {
+      const comet = document.createElement('div');
+      comet.className = 'comet';
+      const startX = Math.random() * window.innerWidth;
+      const startY = -20;
+      const endX = startX - (50 + Math.random() * 100);
+      const endY = window.innerHeight + 20;
+      comet.style.setProperty('--startX', `${startX}px`);
+      comet.style.setProperty('--startY', `${startY}px`);
+      comet.style.setProperty('--endX', `${endX}px`);
+      comet.style.setProperty('--endY', `${endY}px`);
+      comet.style.left = startX + 'px';
+      comet.style.top = startY + 'px';
+      comet.style.animation = `cometTrail 3s linear forwards`;
+      document.body.appendChild(comet);
+      setTimeout(() => comet.remove(), 3000);
+    }
+    setInterval(createComet, 15000);
+    
+    /* Animate Sentence with 3D, Parallax Wobble, Snake-like Motion, Blur/Scale Entrance & Exit */
+    async function animateSentence(text) {
+      const containerRect = container.getBoundingClientRect();
+      const moonRect = moonElem.getBoundingClientRect();
+      // Starting at the moon's center (relative to container)
+      const startX = moonRect.left + moonRect.width / 2 - containerRect.left;
+      const startY = moonRect.top + moonRect.height / 2 - containerRect.top;
+      // Final destination: roughly centered in the text container
+      const endX = (container.clientWidth - text.length * 10) / 2;
+      const endY = container.clientHeight / 2;
+      
+      // Create sentence element with initial (entrance) styling:
+      // Positioned at the moon, with reduced scale, a blur, and 3D rotation.
+      const sentenceElem = document.createElement('div');
+      sentenceElem.className = 'sentence';
+      sentenceElem.textContent = text;
+      sentenceElem.style.transform = `translate3d(${startX}px, ${startY}px, 0) scale(0.5) rotateX(30deg) rotateY(30deg)`;
+      sentenceElem.style.opacity = 0;
+      sentenceElem.style.filter = 'blur(8px)';
+      container.appendChild(sentenceElem);
+      
+      // Entrance animation parameters
+      const duration = 4000; // Longer display duration for smoother motion
+      const amplitude = 40;  // Amplitude for the wobble (parallax effect)
+      const frequency = 2;   // Frequency for the sine-based wobble
+      const dx = endX - startX;
+      const dy = endY - startY;
+      // Calculate a perpendicular vector for the wobble offset
+      let pX = -dy, pY = dx;
+      const pLen = Math.sqrt(pX * pX + pY * pY);
+      if (pLen) { pX /= pLen; pY /= pLen; }
+      
+      return new Promise(resolve => {
+        let startTime = null;
+        function animate(time) {
+          if (!startTime) startTime = time;
+          let elapsed = time - startTime;
+          let progress = Math.min(elapsed / duration, 1);
+          // Cubic-bezier-like easing (easeOutBack approximation)
+          const ease = 1 - Math.pow(1 - progress, 3);
+          // Linear interpolation between start and end positions
+          const linX = startX + dx * ease;
+          const linY = startY + dy * ease;
+          // Wobble offset (sine wave)
+          const offset = amplitude * Math.sin(ease * frequency * 2 * Math.PI);
+          const wobbleX = pX * offset;
+          const wobbleY = pY * offset;
+          // Gradually reduce 3D rotation from initial (30°) to 0° for a flattening effect
+          const rotX = 30 * (1 - ease);
+          const rotY = 30 * (1 - ease);
+          // Scale and blur adjustments
+          const scale = 0.5 + 0.5 * ease;
+          const blur = 8 * (1 - ease);
+          // Combine transformations with translate3d for hardware acceleration
+          const finalX = linX + wobbleX;
+          const finalY = linY + wobbleY;
+          sentenceElem.style.transform = `translate3d(${finalX}px, ${finalY}px, 0) scale(${scale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+          sentenceElem.style.opacity = ease;
+          sentenceElem.style.filter = `blur(${blur}px)`;
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            // When the sentence reaches its destination, hold for a moment...
+            setTimeout(() => {
+              // Then exit with a smooth fade-out and slight blur increase
+              sentenceElem.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out';
+              sentenceElem.style.opacity = 0;
+              sentenceElem.style.filter = 'blur(6px)';
+              // Trigger coordinated particle effects at the moon's center
+              createMoonDust(moonRect.left + moonRect.width / 2, moonRect.top + moonRect.height / 2);
+              const rect = sentenceElem.getBoundingClientRect();
+              createSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+              setTimeout(() => {
+                sentenceElem.remove();
+                resolve();
+              }, 1600);
+            }, 1000);
+          }
+        }
+        requestAnimationFrame(animate);
+      });
+    }
+    
+    /* Loop Through and Animate Messages Continuously */
+    async function showMessages() {
+      while (true) {
+        await animateSentence(messages[currentIndex]);
+        currentIndex = (currentIndex + 1) % messages.length;
+        // Brief pause between messages for smoother transitions
+        await new Promise(resolve => setTimeout(resolve, 1200));
+      }
+    }
+    // Start the sequence after a short delay
+    setTimeout(showMessages, 2000);
+  </script>
 </body>
 </html>
