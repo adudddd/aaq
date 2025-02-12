@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>cosmic</title>
+  <title>Star</title>
   <style>
     /* Basic Setup & 3D Perspective */
     body {
@@ -56,6 +56,13 @@
       0%, 100% { opacity: 0.3; }
       50% { opacity: 1; }
     }
+    /* New class for stars forming text */
+    .text-star {
+      width: 6px !important;
+      height: 6px !important;
+      background: #fff !important;
+      box-shadow: 0 0 10px #fff !important;
+    }
     /* Enhanced, Static Moon */
     .moon {
       position: absolute;
@@ -95,7 +102,7 @@
   <div class="aurora"></div>
   <div class="stars"></div>
   <div class="moon"></div>
-  <div class="title">To My Celestial Love</div>
+  <div class="title">To My Celestial</div>
 
   <script>
     /***** Star Particle Setup *****/
@@ -169,16 +176,16 @@
       // Determine how many stars will be used (limited by our star pool)
       const numTargets = Math.min(starPool.length, targets.length);
       
-      // Animate stars to form the text
+      // Animate stars to form the text and enhance their appearance for readability
       for (let i = 0; i < numTargets; i++) {
         const star = starPool[i];
-        // Use CSS transition for smooth movement
+        star.classList.add("text-star"); // Enlarge and add glow for text formation
         star.style.transition = 'all 2s ease-out';
         star.style.left = targets[i].x + 'px';
         star.style.top = targets[i].y + 'px';
         star.style.opacity = 1;
       }
-      // Optional: fade out unused stars (if any)
+      // Fade out any unused stars
       for (let i = numTargets; i < starPool.length; i++) {
         const star = starPool[i];
         star.style.transition = 'all 2s ease-out';
@@ -189,8 +196,9 @@
       // Hold the formed text for a moment (e.g. 2 seconds)
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Disperse: Animate all stars back to random positions
+      // Disperse: Animate all stars back to random positions and remove enhanced styling
       for (let star of starPool) {
+        star.classList.remove("text-star");
         star.style.transition = 'all 2s ease-out';
         const pos = getRandomPosition();
         star.style.left = pos.x + 'px';
