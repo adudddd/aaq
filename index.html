@@ -52,8 +52,6 @@
     .moon:hover {
       box-shadow: 0 0 80px rgba(255,255,255,0.7);
     }
-    /* Removed the vertical shiny moon-beam for a cleaner look */
-
     /* Text Container */
     .text-container {
       position: relative;
@@ -78,7 +76,7 @@
     @keyframes titleReveal {
       to { opacity: 1; }
     }
-    /* Sentence Animation */
+    /* Sentence Animation Style */
     .sentence {
       position: absolute;
       font-size: 1.5em;
@@ -175,7 +173,7 @@
       starsContainer.appendChild(star);
     }
 
-    /* Messages to Animate (Increased number of texts) */
+    /* Messages to Animate (More texts added) */
     const messages = [
       "In this vast cosmic dance of stars and moons, you are my universe's brightest light.",
       "Like the eternal moon that graces our night sky, your presence fills my world with wonder.",
@@ -252,50 +250,83 @@
     // Create a comet every 15 seconds
     setInterval(createComet, 15000);
 
-    /* Animate Entire Sentence from the Moon */
+    /* Animate Sentence with Snake-Like (Wavy) Path */
     async function animateSentence(text) {
       const containerRect = container.getBoundingClientRect();
       const moonRect = moonElem.getBoundingClientRect();
-      // Calculate the moon's center relative to the container
+      // Start at the moon's center relative to the container
       const startX = moonRect.left + moonRect.width / 2 - containerRect.left;
       const startY = moonRect.top + moonRect.height / 2 - containerRect.top;
       
-      // Define the final position for the sentence (roughly centered)
+      // Define the final destination (roughly centered)
       const endX = (container.clientWidth - text.length * 10) / 2;
       const endY = container.clientHeight / 2;
       
-      // Create the sentence element
+      // Create the sentence element; start with scale 0 for a popping effect
       const sentenceElem = document.createElement('div');
       sentenceElem.className = 'sentence';
       sentenceElem.textContent = text;
-      // Initially position the sentence at the moon's center (with zero scale)
       sentenceElem.style.transform = `translate(${startX}px, ${startY}px) scale(0)`;
-      sentenceElem.style.opacity = 0;
+      sentenceElem.style.opacity = 1;
       container.appendChild(sentenceElem);
       
-      // Allow a short moment before animating
-      await new Promise(resolve => setTimeout(resolve, 50));
-      sentenceElem.style.transition = 'transform 2s ease-out, opacity 2s ease-out';
-      sentenceElem.style.transform = `translate(${endX}px, ${endY}px) scale(1)`;
-      sentenceElem.style.opacity = 1;
+      // Parameters for the snake-like motion
+      const duration = 2500; // duration of the movement in ms
+      const amplitude = 30;  // amplitude of the sine wave offset
+      const frequency = 2;   // number of sine cycles during the movement
       
-      // Create a moon dust effect at the source
-      createMoonDust(moonRect.left + moonRect.width / 2, moonRect.top + moonRect.height / 2);
+      const dx = endX - startX;
+      const dy = endY - startY;
+      // Calculate the perpendicular vector (normalized)
+      let pX = -dy, pY = dx;
+      const pLength = Math.sqrt(pX * pX + pY * pY);
+      if (pLength > 0) {
+        pX /= pLength;
+        pY /= pLength;
+      } else {
+        pX = 0;
+        pY = 0;
+      }
       
-      // Wait for the animation to complete
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      
-      // Sparkle effect around the sentence
-      const rect = sentenceElem.getBoundingClientRect();
-      createSparkles(rect.left + rect.width/2, rect.top + rect.height/2);
-      
-      // Fade out the sentence
-      sentenceElem.style.transition = 'opacity 1s ease-out';
-      sentenceElem.style.opacity = 0;
-      await new Promise(resolve => setTimeout(resolve, 1100));
-      
-      // Remove the sentence element
-      sentenceElem.remove();
+      return new Promise(resolve => {
+        let startTime = null;
+        function animate(time) {
+          if (!startTime) startTime = time;
+          let elapsed = time - startTime;
+          let progress = Math.min(elapsed / duration, 1);
+          
+          // Scale from 0 to 1 as it moves
+          const scale = progress;
+          // Linear interpolation between start and end
+          const linX = startX + dx * progress;
+          const linY = startY + dy * progress;
+          // Sine offset perpendicular to the straight line
+          const offset = amplitude * Math.sin(progress * frequency * 2 * Math.PI);
+          const finalX = linX + pX * offset;
+          const finalY = linY + pY * offset;
+          
+          sentenceElem.style.transform = `translate(${finalX}px, ${finalY}px) scale(${scale})`;
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            // When the movement finishes, add moon dust and sparkles
+            createMoonDust(moonRect.left + moonRect.width / 2, moonRect.top + moonRect.height / 2);
+            const rect = sentenceElem.getBoundingClientRect();
+            createSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            // After a brief pause, fade out the sentence
+            setTimeout(() => {
+              sentenceElem.style.transition = 'opacity 1s ease-out';
+              sentenceElem.style.opacity = 0;
+              setTimeout(() => {
+                sentenceElem.remove();
+                resolve();
+              }, 1100);
+            }, 500);
+          }
+        }
+        requestAnimationFrame(animate);
+      });
     }
 
     /* Loop through and display messages continuously */
