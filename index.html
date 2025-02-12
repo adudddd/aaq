@@ -49,7 +49,6 @@
       border-radius: 50%;
       /* Stars keep twinkling in the background */
       animation: twinkle 5s infinite;
-      /* Will-change for smoother transitions when we animate their positions */
       will-change: left, top, opacity;
     }
     @keyframes twinkle {
@@ -96,20 +95,33 @@
       text-shadow: 0 0 10px rgba(0,0,0,0.5);
       pointer-events: none;
     }
+    /* Overlay Text for Readability */
+    .text-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font: bold 100px Arial;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255,255,255,0.8);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease-out;
+      z-index: 5;
+    }
   </style>
 </head>
 <body>
   <div class="aurora"></div>
   <div class="stars"></div>
   <div class="moon"></div>
-  <div class="title">To My Celestial</div>
+  <div class="title">To My Celestial Love</div>
 
   <script>
     /***** Star Particle Setup *****/
     const starsContainer = document.querySelector('.stars');
     const starPool = [];
-    const NUM_STARS = 300; // Increase this number for denser text formation
-    // Create our pool of stars (they’ll be used both as background and for text formation)
+    const NUM_STARS = 300; // Increase for denser text formation
     function getRandomPosition() {
       return {
         x: Math.random() * window.innerWidth,
@@ -128,17 +140,14 @@
     }
     
     /***** Text-to-Star Mapping Functions *****/
-    // Create an offscreen canvas to render the text and extract pixel positions
     function getTextTargets(message) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      // Use full window dimensions for the text formation
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // Adjust font size as desired
       ctx.font = 'bold 100px Arial';
       ctx.fillStyle = '#fff';
       ctx.fillText(message, canvas.width / 2, canvas.height / 2);
@@ -146,11 +155,11 @@
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
       const targets = [];
-      const step = 6; // Increase step for fewer points (lower resolution)
+      const step = 6; // Lower resolution if needed
       for (let y = 0; y < canvas.height; y += step) {
         for (let x = 0; x < canvas.width; x += step) {
           const index = (y * canvas.width + x) * 4;
-          if (data[index + 3] > 128) { // If pixel is not transparent
+          if (data[index + 3] > 128) {
             targets.push({ x, y });
           }
         }
@@ -158,7 +167,6 @@
       return targets;
     }
     
-    // Randomly shuffle an array (Fisher–Yates shuffle)
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -167,19 +175,25 @@
       return array;
     }
     
-    /***** Animation: Form Text Using Stars, Then Disperse *****/
+    /***** Animation: Form Text Using Stars & Overlay, Then Disperse *****/
     async function animateTextFormation(message) {
-      // Get the target positions for the given message
+      // Create overlay text element for actual message display
+      const overlay = document.createElement('div');
+      overlay.className = 'text-overlay';
+      overlay.textContent = message;
+      // Initially hidden
+      overlay.style.opacity = 0;
+      document.body.appendChild(overlay);
+      
+      // Get target positions from text rendering
       let targets = getTextTargets(message);
-      // Shuffle targets so we get a varied distribution
       targets = shuffle(targets);
-      // Determine how many stars will be used (limited by our star pool)
       const numTargets = Math.min(starPool.length, targets.length);
       
-      // Animate stars to form the text and enhance their appearance for readability
+      // Animate stars to form the text & enhance their appearance
       for (let i = 0; i < numTargets; i++) {
         const star = starPool[i];
-        star.classList.add("text-star"); // Enlarge and add glow for text formation
+        star.classList.add("text-star");
         star.style.transition = 'all 2s ease-out';
         star.style.left = targets[i].x + 'px';
         star.style.top = targets[i].y + 'px';
@@ -191,23 +205,27 @@
         star.style.transition = 'all 2s ease-out';
         star.style.opacity = 0;
       }
-      // Wait for the formation to complete and be held
-      await new Promise(resolve => setTimeout(resolve, 2200));
-      // Hold the formed text for a moment (e.g. 2 seconds)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Fade in the overlay text after a short delay for a smooth transition
+      setTimeout(() => {
+        overlay.style.opacity = 1;
+      }, 1000);
       
-      // Disperse: Animate all stars back to random positions and remove enhanced styling
+      // Wait for formation and hold (2.2s for formation + 2s hold)
+      await new Promise(resolve => setTimeout(resolve, 4200));
+      
+      // Begin dispersing: fade out overlay text concurrently with star dispersion
+      overlay.style.opacity = 0;
       for (let star of starPool) {
         star.classList.remove("text-star");
         star.style.transition = 'all 2s ease-out';
         const pos = getRandomPosition();
         star.style.left = pos.x + 'px';
         star.style.top = pos.y + 'px';
-        // Ensure they’re visible
         star.style.opacity = 1;
       }
-      // Wait for dispersion to finish
+      // Wait for dispersion animation to finish (2.2s)
       await new Promise(resolve => setTimeout(resolve, 2200));
+      overlay.remove();
     }
     
     /***** Loop Through Messages Continuously *****/
@@ -231,7 +249,6 @@
       while (true) {
         await animateTextFormation(messages[currentIndex]);
         currentIndex = (currentIndex + 1) % messages.length;
-        // Brief pause between messages
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
