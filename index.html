@@ -888,3 +888,104 @@
     // Force final HUD update
     updateHUD();
 }      
+// Helper function to spawn a power-up
+        function spawnPowerUp() {
+            const types = ['health', 'speed', 'shield'];
+            const type = types[Math.floor(Math.random() * types.length)];
+
+            const colors = {
+                health: '#33ff33',
+                speed: '#3333ff',
+                shield: '#ffff33'
+            };
+
+            powerUps.push({
+                x: Math.random() * (canvas.width - 30),
+                y: -30,
+                width: 30,
+                height: 30,
+                type: type,
+                speed: 1,
+                color: colors[type]
+            });
+        }
+
+        // Helper function to update power-ups
+        function updatePowerUps() {
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const powerUp = powerUps[i];
+
+                // Update position
+                powerUp.y += powerUp.speed;
+
+                // Remove if off screen
+                if (powerUp.y > canvas.height) {
+                    powerUps.splice(i, 1);
+                    continue;
+                }
+
+                // Draw power-up
+                ctx.fillStyle = powerUp.color;
+                ctx.beginPath();
+                ctx.arc(powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2, powerUp.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw icon based on type
+                ctx.fillStyle = '#000';
+                ctx.font = '20px Arial';
+                let symbol = '';
+
+                switch (powerUp.type) {
+                    case 'health':
+                        symbol = '+';
+                        break;
+                    case 'speed':
+                        symbol = '→';
+                        break;
+                    case 'shield':
+                        symbol = '◯';
+                        break;
+                }
+
+                ctx.fillText(symbol, powerUp.x + powerUp.width / 2 - 6, powerUp.y + powerUp.height / 2 + 6);
+
+                // Power-up glow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = powerUp.color;
+                ctx.beginPath();
+                ctx.arc(powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2, powerUp.width / 2, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Helper function to update particles
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+
+                // Update position
+                particle.x += particle.velX;
+                particle.y += particle.velY;
+
+                // Update lifetime
+                particle.lifetime--;
+
+                // Remove if lifetime is over
+                if (particle.lifetime <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                // Draw particle
+                ctx.globalAlpha = particle.lifetime / particle.maxLifetime;
+                ctx.fillStyle = particle.color;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+    </script>
+</body>
+</html>
